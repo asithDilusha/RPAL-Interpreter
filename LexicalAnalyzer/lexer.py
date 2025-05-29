@@ -1,70 +1,81 @@
 import re
+from enum import Enum
 
-Token_types = ["Keyword", "Identifier", "Integer", "String", "EndOfToken", "Punctuation", "Operator"]
+class TokenType(Enum):
+    KEYWORD = 1
+    IDENTIFIER = 2
+    INTEGER = 3
+    STRING = 4
+    END_OF_TOKENS = 5
+    PUNCTUATION = 6
+    OPERATOR = 7
 
-class Token:
-    def __init__(self, type, value):
-        if type not in Token_types:
-            raise ValueError(f"Invalid token type: {type}")
-        self.type = type
+class MyToken:
+    def __init__(self, token_type, value):
+        if not isinstance(token_type, TokenType):
+            raise ValueError("token_type must be an instance of TokenType enum")
+        self.type = token_type
         self.value = value
 
-        def get_type(self):
-            return self.type
+    # Getters for type and value
+    def get_type(self):
+        return self.type
 
-        def get_value(self):
-            return self.value
-        
-def Lexer(input_programme):
-    Tokens = []
+    def get_value(self):
+        return self.value
+
+
+
+def tokenize(input_str):
+    tokens = []
     keywords = {
-        'Keyword': r'(let|in|fn|where|aug|or|not|gr|ge|ls|le|eq|ne|true|false|nil|dummy|within|and|rec)\b',
-        'Identifier': r'[a-zA-Z][a-zA-Z0-9_]*',
-        'Integer': r'[0-9]+',
-        'Operator': r'[+\-*<>&.@/:=~|$\#!%^_\[\]{}"\'?]+',
-        'String': r'\'(?:\\\'|[^\'])*\'',
-        'Punctuation': r'[();,]',
-        'Comment': r'//.*',
-        'Spaces': r'[ \t\n]+'
+        'COMMENT': r'//.*',
+        'KEYWORD': r'(let|in|fn|where|aug|or|not|gr|ge|ls|le|eq|ne|true|false|nil|dummy|within|and|rec)\b',
+        'STRING': r'\'(?:\\\'|[^\'])*\'',
+        'IDENTIFIER': r'[a-zA-Z][a-zA-Z0-9_]*',
+        'INTEGER': r'\d+',
+        'OPERATOR': r'[+\-*<>&.@/:=~|$\#!%^_\[\]{}"\'?]+',
+        'SPACES': r'[ \t\n]+',
+        'PUNCTUATION': r'[();,]'
     }
-
-    while input_programme:
-        isToken = False
-        for token_type, pattern in keywords.items():
-            match = re.match(pattern, input_programme)
-            if match:
-                if token_type == 'Spaces':
-                    input_programme = input_programme[match.end():]
-                    isToken = True
-                    break
-                elif token_type == 'Comment':
-                    input_programme = input_programme[match.end():]
-                    isToken = True
-                    break
-                else:
-                    if token_type not in Token_types:
-                        raise ValueError(f"Invalid token type: {token_type}")
-                    print(f"Token: {token_type}, Value: {match.group(0)}")
-                    Tokens.append(Token(token_type, match.group(0)))
-                    input_programme = input_programme[match.end():]
-                    isToken = True
-                    break
-        
-        if not isToken:
-            print(f"Unexpected character: {input_programme}")
-            raise ValueError(f"Unexpected character: {input_programme[0]}")
     
-    return Tokens
-                
+    while input_str:
+        matched = False
+        for key, pattern in keywords.items():
+            match = re.match(pattern, input_str)
+            if match:
+                # print(key, match.group(0))
+                if key != 'SPACES':
+                    if key == 'COMMENT':
+                        comment = match.group(0)
+                        input_str = input_str[match.end():]
+                        matched = True
+                        break
+                    else:
+                        token_type = getattr(TokenType, key)  # Get TokenType enum value
+                        if not isinstance(token_type, TokenType):
+                            raise ValueError(f"Token type '{key}' is not a valid TokenType")
+                        tokens.append(MyToken(token_type, match.group(0)))
+                        
+                        input_str = input_str[match.end():]
+                        matched = True
+                        break
+                input_str = input_str[match.end():]
+                matched = True
+                break
+        if not matched:
+            print("Error: Unable to tokenize input")
+    return tokens
 
+# Example usage
 if __name__ == "__main__":
     # Test input string
     test_input = "let x = 5 in x + 3"
     print("Testing lexer with input:", test_input)
     print("\nTokenizing...")
     
-    tokens = Lexer(test_input)
+    tokens = tokenize(test_input)
     
     print("\nTokens found:")
     for token in tokens:
-        print(f"Type: {token.type}, Value: {token.value}")
+        print(f"Type: {token.type.name}, Value: {token.value}")
