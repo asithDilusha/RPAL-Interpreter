@@ -1,6 +1,6 @@
 import sys
 from enum import Enum
-from LexicalAnalyzer.lexical_analyzer import tokenize, TokenType, MyToken
+from LexicalAnalyzer.lexer import MyToken, TokenType
 from typing import List, Optional
 
 class NodeType(Enum):
